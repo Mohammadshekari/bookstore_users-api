@@ -2,15 +2,18 @@ package users
 
 import (
 	"github.com/mohammadshekari/bookstore_users-api/utils/errors"
+	"gorm.io/gorm"
 	"strings"
+	"time"
 )
 
 type User struct {
-	Id          int64  `json:"id"`
-	FirstName   string `json:"firstName"`
-	LastName    string `json:"lastName"`
-	Email       string `json:"email"`
-	DateCreated string `json:"dateCreated"`
+	ID          int64          `gorm:"primaryKey" json:"id"`
+	FirstName   string         `json:"first_name"`
+	LastName    string         `json:"last_name"`
+	Email       string         `json:"email"`
+	DateCreated time.Time      `gorm:"<-:create" json:"date_created"`
+	DeletedAt   gorm.DeletedAt `gorm:"index" json:"-"`
 }
 
 func (user *User) Validate() *errors.RestErr {
