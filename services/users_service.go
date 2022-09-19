@@ -22,3 +22,40 @@ func CreateUser(user users.User) (*users.User, *errors.RestErr) {
 	}
 	return &user, nil
 }
+
+func UpdateUser(isPartial bool, user users.User) (*users.User, *errors.RestErr) {
+	// Get User Original Data from DataBase
+	current, err := GetUser(user.ID)
+	// check User Exists
+	if err != nil {
+		return nil, err
+	}
+
+	// Validate user Values
+	if err := user.Validate(); err != nil {
+		return nil, err
+	}
+
+	if isPartial {
+		if user.FirstName != "" {
+			current.FirstName = user.FirstName
+		}
+		if user.LastName != "" {
+			current.LastName = user.LastName
+		}
+		if user.Email != "" {
+			current.Email = user.Email
+		}
+	} else {
+		// Set new Values to user who got from DataBase
+		current.FirstName = user.FirstName
+		current.LastName = user.LastName
+		current.Email = user.Email
+	}
+	// Send to Update Method
+	if err := current.Update(); err != nil {
+		return nil, err
+	}
+	// Return user Sent data
+	return current, nil
+}

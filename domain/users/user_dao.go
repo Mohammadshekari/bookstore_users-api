@@ -2,37 +2,36 @@ package users
 
 import (
 	"fmt"
-	"github.com/mohammadshekari/bookstore_users-api/utils/date_utils"
+	"github.com/mohammadshekari/bookstore_users-api/database"
+	"github.com/mohammadshekari/bookstore_users-api/utils/database_error"
 	"github.com/mohammadshekari/bookstore_users-api/utils/errors"
 )
 
-var (
-	usersDB = make(map[int64]*User)
-)
-
 func (user *User) Get() *errors.RestErr {
-	result := usersDB[user.ID]
-	if result == nil {
-		return errors.NewNotFoundError(fmt.Sprintf("user %d not found", user.ID))
+	if err := database.Db.First(&user, user.ID); err.Error != nil {
+		return database_error.NewDataBaseError(err.Error, "user")
 	}
-	user.ID = result.ID
-	user.FirstName = result.FirstName
-	user.LastName = result.LastName
-	user.Email = result.Email
-	user.DateCreated = result.DateCreated
-
 	return nil
 }
 
 func (user *User) Save() *errors.RestErr {
-	current := usersDB[user.ID]
-	if current != nil {
-		if current.Email == user.Email {
-			return errors.NewBadRequestError(fmt.Sprintf("email %s already registered", user.Email))
-		}
+	if result := database.Db.First(&User{}, user.ID); result.Error == nil {
 		return errors.NewBadRequestError(fmt.Sprintf("user %d already exists", user.ID))
 	}
-	user.DateCreated = date_utils.GetNow()
-	usersDB[user.ID] = user
+	//if result := database.Db.First(&User{}, "email = ?", user.Email); result.Error == nil {
+	//	return errors.NewBadRequestError(fmt.Sprintf("email %s already registered", user.Email))
+	//}
+	if err := database.Db.Create(&user).Error; err != nil {
+		return database_error.NewDataBaseError(err, "user")
+	}
+	return nil
+}
+
+func (user *User) Update() *errors.RestErr {
+	// Already Checked User exists and Values of user has been Updated
+	// Send to Update
+	if result := database.Db.Model(&User{ID: user.ID}).Select("first_name", "last_name", "email").Updates(user); result.Error != nil {
+		return errors.NewBadRequestError(fmt.Sprintf("some %s error happened", user.Email))
+	}
 	return nil
 }
